@@ -1,10 +1,10 @@
-import { response } from "express";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiErrors } from "../utils/ApiErrors.js"
 import { User } from "../models/user.model.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { ApiResponce } from "../utils/ApiResponce.js";
 import jwt from "jsonwebtoken";
+// import { verify } from "jsonwebtoken";
 
 const generateAccessAndRefreshToken = async(userId) => {
         try {
@@ -187,44 +187,46 @@ const logOutUser = asyncHandler(async(req,res) => {
         .json(new ApiResponce(200, {}, "User logged out"))
 })
 
-const refreshAccessToken = asyncHandler(async(req,res) => {
-       const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken
-})
+const refreshAccessToken = asyncHandler(async (req, res) => {
+        const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
+    
         if (!incomingRefreshToken) {
-                throw new ApiErrors(401, "Unauthorized access")
+            throw new ApiErrors(401, "Unauthorized access");
         }
-
+    
         try {
-                const decodedToken = jwt.verify(
-                        incomingRefreshToken,
-                        process.env.REFRESH_TOKEN_SECRET
-                )
-        
-                const user = await user.findById(decodedToken?._id)
-                if (!user) {
-                        throw new ApiErrors(401, "Invalid Refresh token")
-                }
-        
-                if(incomingRefreshToken !== user?.refreshToken){
-                        throw new ApiErrors(401, "refresh token is invalid or expired")
-                }
-        
-                const options = {
-                        httpOnly: true,
-                        secure: true
-                }
-        
-                const{accessToken, newRefreshToken} = await generateAccessAndRefreshToken(user._id)
-        
-                return res.status(200)
+            const jwt = require('jsonwebtoken'); // Import jwt here if not already imported
+            const decodedToken = jwt.verify(
+                incomingRefreshToken,
+                process.env.REFRESH_TOKEN_SECRET
+            );
+    
+            const user = await User.findById(decodedToken?._id);
+            if (!user) {
+                throw new ApiErrors(401, "Invalid Refresh token");
+            }
+    
+            if (incomingRefreshToken !== user?.refreshToken) {
+                throw new ApiErrors(401, "Refresh token is invalid or expired");
+            }
+    
+            const options = {
+                httpOnly: true,
+                secure: true
+            };
+    
+            const { accessToken, newRefreshToken } = await generateAccessAndRefreshToken(user._id);
+    
+            res.status(200)
                 .cookie("accessToken", accessToken, options)
                 .cookie("refreshToken", newRefreshToken, options)
                 .json(
-                        new ApiResponce(200, {accessToken, newRefreshToken},"access token refreshed sucessfully")
-                )
+                    new ApiResponce(200, { accessToken, newRefreshToken }, "Access token refreshed successfully")
+                );
         } catch (error) {
-                throw new ApiErrors(401, error?.message || "Invalid refresh token")
+            throw new ApiErrors(401, error?.message || "Invalid refresh token");
         }
+    });
 
 
 export { 
