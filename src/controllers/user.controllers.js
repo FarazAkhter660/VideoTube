@@ -247,7 +247,7 @@ const changeCurrentPassword = asyncHandler(async(req,res) => {
 
 const getCurrentUser = asyncHandler(async(req,res) => {
         return res.status(200)
-        .json(200, req.user, "Current user fetched successfully")
+        .json(new ApiResponce(200, req.user, "Current user fetched successfully"))
 });
 
 const updateAccountDetails = asyncHandler(async(req, res) =>{
@@ -257,7 +257,7 @@ const updateAccountDetails = asyncHandler(async(req, res) =>{
                 throw new ApiErrors(400, "All fields are required")
         }
 
-        const user = User.findByIdAndUpdate(req.user?._id,
+        const user = await User.findByIdAndUpdate(req.user?._id,
                 {
                         $set: {
                                 fullName: fullName,
@@ -329,7 +329,81 @@ const updateAccountCoverImage = asyncHandler(async(req, res) => {
 
         return res.status(200)
         .json(new ApiResponce(400, user, "Cover Image updated successfully"))
-})
+}); 
+
+        //pipeline
+
+const getUserChannelDetails = asyncHandler(async(req, res) => {
+        //first take user
+        const {username} = req.params
+        //what if user doesn't exist
+        if (!username?.trim()) {
+                throw new ApiErrors(400, "username is missing")
+        }
+        //implimenting pipeline for fetching user details
+
+        const channel = await User.aggregate([
+                {
+                        $match: {
+                                username: username?.toLowerCase()
+                        }
+                },
+                //first pipeline to get subscribers count
+                {
+                        $lookup: {
+                                from: "subscriptions",
+                                localField: "_id",
+                                foreignField: "channel",
+                                as: "subscriber"
+                        }
+                },
+                //humne kitne subscribe kie hai?
+                {
+                        $lookup: {
+                                from: "subscriptions",
+                                localField: "_id",
+                                foreignField: "subscriber",
+                                as: "subscribedTo"
+                        }
+                }, 
+                {
+                        $addFields: {
+                                subscribersCount: {
+                                        $size: "subscribers"
+                                },
+                                channelsSubscribedToCount: {
+                                        $size: "subscribedTo"
+                                },
+                                isSubscribed: {
+                                        $cond: {
+                                                if: {$in: [req.user?._id, "$subscribers.Subscriber"]},
+                                                then: true,
+                                                else: false
+                                        }
+                                }
+                        }
+                },
+                {
+                        $project: {
+                                fullName: 1,
+                                username: 1,
+                                avatar: 1,
+                                coverImage: 1,
+                                email: 1,
+                                subscribersCount: 1,
+                                channelsSubscribedToCount: 1,
+                                isSubscribed: 1
+                        }
+                }
+        ])
+
+        if (!channel?.length) {
+                throw new ApiErrors(404, "channel does not exist")
+        }
+
+        return res.status(200)
+        .json(new ApiResponce(200, channel[0], "User channel fetched successfully"))
+});
 
 export { 
         registerUser,
@@ -340,5 +414,6 @@ export {
         getCurrentUser,
         updateAccountDetails,
         updateAccountAvatar,
-        updateAccountCoverImage
+        updateAccountCoverImage,
+        getUserChannelDetails
 }
