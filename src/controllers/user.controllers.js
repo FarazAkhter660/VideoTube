@@ -4,6 +4,7 @@ import { User } from "../models/user.model.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { ApiResponce } from "../utils/ApiResponce.js";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 // import { verify } from "jsonwebtoken";
 
 const generateAccessAndRefreshToken = async(userId) => {
@@ -357,7 +358,7 @@ const getUserChannelDetails = asyncHandler(async(req, res) => {
                                 as: "subscriber"
                         }
                 },
-                //humne kitne subscribe kie hai?
+                //humne kitno ne subscribe kie hai?
                 {
                         $lookup: {
                                 from: "subscriptions",
@@ -405,6 +406,56 @@ const getUserChannelDetails = asyncHandler(async(req, res) => {
         .json(new ApiResponce(200, channel[0], "User channel fetched successfully"))
 });
 
+const getWatchHistory = asyncHandler(async(req, res) => {
+        const user = await User.aggregate([
+                //get into user's place
+                {
+                        $match: {
+                                _id: new mongoose.Types.ObjectId(req.user._id)
+                        }
+                },
+                //now going into watch History
+                {
+                        $lookup: {
+                                from: "video",
+                                localField: "watchHistory",
+                                foreignField: "_id",
+                                as: "watchHistory",
+                                //implementing sub pipeline for getting info of owner details, therefore doing nested pipeline
+                                pipeline: [
+                                        {
+                                                $lookup: {
+                                                        from: "video",
+                                                        localField: "owner",
+                                                        foreignField: "_id",
+                                                        as: "owner",
+                                                        pipeline: [
+                                                                {
+                                                                        $project: {
+                                                                                fullName: 1,
+                                                                                username: 1,
+                                                                                avatar: 1
+                                                                        }
+                                                                }
+                                                        ]
+                                                }
+                                        },
+                                        {
+                                                $addFields: {
+                                                        owner: {
+                                                                $first: "$owner"
+                                                        }
+                                                }
+                                        }
+                                ]
+                        }
+                }, 
+        ])
+
+        return res.status(200)
+        .json(new ApiResponce(200, user[0].watchHistory,"watch history fetched successfully"))
+});
+
 export { 
         registerUser,
         loginUser,
@@ -415,5 +466,7 @@ export {
         updateAccountDetails,
         updateAccountAvatar,
         updateAccountCoverImage,
-        getUserChannelDetails
+        getUserChannelDetails,
+        getWatchHistory
+
 }
