@@ -5,7 +5,7 @@ import bcrypt from "bcrypt";
 
 const videoSchema = new Schema(
     {
-        videFile: {
+        videoFile: {
             require: true,
             type: String
         },
@@ -45,4 +45,4 @@ const videoSchema = new Schema(
 
 videoSchema.plugin(mongooseAggregatePaginate)
 
-export const video = mongoose.model("video", videoSchema)
+export const video = mongoose.model("Video", videoSchema)
