@@ -103,13 +103,13 @@ const registerUser = asyncHandler(async (req,res) => {
                 new ApiResponce(200, createUser, "User registered successfully")
        )
 })
-//ALGORITHUMS
-// req body se data le aao
-// username or email
-//find the user
-//password check
-//access and referesh token
-//send cookie
+                //ALGORITHUMS
+                // req body se data le aao
+                // username or email
+                //find the user
+                //password check
+                //access and referesh token
+                //send cookie
 const loginUser = asyncHandler(async(req,res) => {
         // req body se data le aao
         const{username, email, password} = req.body
