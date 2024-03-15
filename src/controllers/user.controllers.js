@@ -23,16 +23,16 @@ const generateAccessAndRefreshToken = async(userId) => {
         }
 }
 
-                //ALGORITHUMS
-        //get user details from frontend
-        //validation -- not empty
-        //check if user already exist -- username and email
-        //check for image and avatar
-        //upload them to cloudinary
-        //create user object - create entry in DB
-        //remove password and refresh token field from responce
-        //check for user creation
-        //return responce
+        //         ALGORITHUMS
+        // get user details from frontend
+        // validation -- not empty
+        // check if user already exist -- username and email
+        // check for image and avatar
+        // upload them to cloudinary
+        // create user object - create entry in DB
+        // remove password and refresh token field from responce
+        // check for user creation
+        // return responce
 
 const registerUser = asyncHandler(async (req,res) => {
                 
@@ -468,5 +468,4 @@ export {
         updateAccountCoverImage,
         getUserChannelDetails,
         getWatchHistory
-
 }

@@ -7,3 +7,5 @@ import { Comment } from "../models/comment.model";
 const getVideoComments = asyncHandler(async(req,res) => {
     
 })
+
+export { getVideoComments }
